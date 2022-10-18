@@ -5,20 +5,34 @@ on:
     types: [opened, reopened]
 
 env:
+  ORGANIZATION: bootCorp
   DRY_RUN: false
 
 jobs:
-  print_context:
-    runs-on: ubuntu-latest
-    steps:
-      - env:
-          EVENT_CONTEXT: ${{ toJSON(github.event) }}
-        run: |
-          echo $EVENT_CONTEXT
   comment-external-pr:
     runs-on: ubuntu-latest
     steps:
-      - name: Comment External Contributor PR
+      - name: Get organization members
+        id: get-members
+        env:
+          CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          gh api graphql \
+            --raw-field org=$ORGANIZATION \
+            --raw-field query='
+              query($org: String!) {
+                organization(login: $org) {
+                  membersWithRole(first: 100) {
+                    nodes {
+                      login
+                    }
+                  }
+                }
+              }' > org_members.json
+          echo 'CONTRIBUTOR_IS_ORG_MEMBER='$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == $CONTRIBUTOR)' org_members.json >> $GITHUB_ENV
+
+      - name: Comment on external contribution PR
+        if: ${{ env.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
