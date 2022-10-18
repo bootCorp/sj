@@ -5,7 +5,6 @@ on:
     types: [opened, reopened]
 
 env:
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ORGANIZATION: bootCorp
   DRY_RUN: false
 
@@ -14,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get organization members
-        id: get-members
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
         run: |
           gh api graphql \
@@ -35,6 +34,7 @@ jobs:
       - name: Comment on external contribution PR
         if: ${{ env.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
         run: |
           echo "Commenting new external PR: $PR"
