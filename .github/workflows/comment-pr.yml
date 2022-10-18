@@ -2,9 +2,15 @@ name: External contribution guidelines
 
 on:
   pull_request_target:
-    types: [opened, reopened]
+    types: 
+      - opened
+      - reopened
+
+permissions:
+  pull-requests: write
 
 env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ORGANIZATION: bootCorp
   DRY_RUN: false
 
@@ -14,7 +20,6 @@ jobs:
     steps:
       - name: Get organization members
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
         run: |
           gh api graphql \
@@ -29,12 +34,11 @@ jobs:
                   }
                 }
               }' > org_members.json
-            echo 'CONTRIBUTOR_IS_ORG_MEMBER='$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json) >> $GITHUB_ENV
-
+          echo 'CONTRIBUTOR_IS_ORG_MEMBER='$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json) >> $GITHUB_ENV
+          
       - name: Comment on external contribution PR
         if: ${{ env.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
         run: |
           echo "Commenting new external PR: $PR"
