@@ -25,10 +25,9 @@ jobs:
             --raw-field name="$REPOSITORY" \
             --raw-field query='
               query($org: String!, $name: String!) {
-                  repository(name: $name, owner: $org) {
-                    id
-                    name
-                  }
+                repository(name: $name, owner: $org) {
+                  id
+                  name
                 }
               }' > project_columns.json
           echo $(jq project_columns.json)
