@@ -7,7 +7,9 @@ on:
       - reopened
 
 env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ORGANIZATION: bootCorp
+  REPOSITORY: sj
   DRY_RUN: false
 
 jobs:
@@ -16,23 +18,22 @@ jobs:
     steps:
       - name: Get organization members
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
         run: |
           gh api graphql \
             --raw-field org="$ORGANIZATION" \
+            --raw-field name="$REPOSITORY" \
             --raw-field query='
-              query($org: String!) {
-                organization(login: $org) {
-                  membersWithRole(first: 100) {
-                    nodes {
-                      login
-                    }
+              query($org: String!, $name: String!) {
+                  repository(name: $name, owner: $org) {
+                    id
+                    name
                   }
                 }
-              }' > org_members.json
-          echo 'CONTRIBUTOR_IS_ORG_MEMBER='$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json) >> $GITHUB_ENV
-          
+              }' > project_columns.json
+          echo $(jq project_columns.json)
+          #echo 'COLUMN_ID='$(jq '.data.repository.project.columns.nodes[] | select(.name == "Triage") | .id' project_columns.json) >> $GITHUB_ENV
+    
       - name: Comment on external contribution PR
         if: ${{ env.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
         env:
