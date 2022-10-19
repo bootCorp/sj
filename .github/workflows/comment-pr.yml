@@ -1,7 +1,7 @@
 name: External contribution guidelines
 
 on:
-  issues:
+  pull_request_target:
     types: 
       - opened
       - reopened
@@ -47,6 +47,6 @@ jobs:
         run: |
           echo "Commenting new external PR: $PR"
           if [[ $DRY_RUN == "false" ]]; then
-            gh pr edit $PR --add-label 'external contribution :star:'
-            gh pr comment $PR --body 'Hi, thank you for your contribution.'
+            gh pr edit $PR --add-label "external contribution :star:"
+            gh pr comment $PR --body "Hi, thank you for your contribution."
           fi
