@@ -6,6 +6,10 @@ on:
       - opened
       - reopened
 
+permissions:
+  contents: read
+  pull-requests: write
+
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ORGANIZATION: bootCorp
