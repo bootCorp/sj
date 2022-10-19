@@ -13,8 +13,6 @@ env:
 jobs:
   comment-external-pr:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
     steps:
       - name: Get organization members
         env:
