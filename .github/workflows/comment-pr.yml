@@ -6,10 +6,6 @@ on:
       - opened
       - reopened
 
-permissions:
-  contents: read
-  pull-requests: write
-
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ORGANIZATION: bootCorp
@@ -18,6 +14,9 @@ env:
 jobs:
   comment-external-pr:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
     steps:
       - name: Get organization members
         env:
