@@ -1,7 +1,7 @@
 name: External contribution guidelines
 
 on:
-  pull_request_target:
+  pull_request:
     types: 
       - opened
       - reopened
@@ -16,29 +16,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get organization members
-        id: get-members
         env:
           CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
         run: |
-          org_member="$(gh api graphql \
+          gh api graphql \
             --raw-field org="$ORGANIZATION" \
             --raw-field query='
-              query($org: String!) {
+              query($org: String!, $cursor: String) {
                 organization(login: $org) {
-                  membersWithRole(first: 100) {
+                  membersWithRole(first: 100, after: $cursor) {
+                    pageInfo {
+                      hasNextPage,
+                      endCursor
+                    }
                     nodes {
                       login
                     }
                   }
                 }
-              }')"
-          echo "ORG MEMBERS $org_member"
-          is_member="$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json)"
-          echot "IS MEMBER $is_member"
-          echo "::set-output name=is_member::$is_member"
-
+              }' > org_members.json
+          echo 'CONTRIBUTOR_IS_ORG_MEMBER='$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json) >> $GITHUB_ENV
+          
       - name: Comment on external contribution PR
-        if: ${{ steps.get-members.output.is_members == 'false' }}
+        if: ${{ env.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
         env:
           PR: ${{ github.event.pull_request.html_url }}
         run: |
