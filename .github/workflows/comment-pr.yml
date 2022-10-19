@@ -35,8 +35,9 @@ jobs:
                   }
                 }
               }' > org_members.json
-            echo 'CONTRIBUTOR_IS_ORG_MEMBER='$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json) >> $GITHUB_ENV
-            echo ${{ env.CONTRIBUTOR_IS_ORG_MEMBER }}
+            echo 'CONTRIBUTOR_IS_ORG_MEMBER=$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json)' >> $GITHUB_ENV
+            echo "${{ env.CONTRIBUTOR_IS_ORG_MEMBER }}"
+            echo "MEMBERS: $(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json)"
       - name: Comment on external contribution PR
         if: ${{ env.CONTRIBUTOR_IS_ORG_MEMBER == false }}
         env:
