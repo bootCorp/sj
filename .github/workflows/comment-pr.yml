@@ -1,7 +1,7 @@
 name: External contribution guidelines
 
 on:
-  pull_request:
+  issues:
     types: 
       - opened
       - reopened
@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Get organization members
         env:
-          CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
+          CONTRIBUTOR: ${{ github.event.issues.user.login }}
         run: |
           gh api graphql \
             --raw-field login="$CONTRIBUTOR" \
@@ -40,7 +40,7 @@ jobs:
       - name: Comment on external contribution PR
         if: ${{ env.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
         env:
-          PR: ${{ github.event.pull_request.html_url }}
+          PR: ${{ github.event.issues.html_url }}
         run: |
           echo "Commenting new external PR: $PR"
           if [[ $DRY_RUN == "false" ]]; then
