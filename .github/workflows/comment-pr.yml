@@ -22,24 +22,24 @@ jobs:
         env:
           CONTRIBUTOR: ${{ github.event.issue.user.login }}
         run: |
-          gh api graphql \
-            --raw-field login="$CONTRIBUTOR" \
+           gh api graphql \
+            --raw-field org="$ORGANIZATION" \
             --raw-field query='
-              query ($login: String!, $cursor: String) {
-                user(login: $login) {
-                  organizations(first: 100, after: $cursor) {
+              query($org: String!, $cursor: String) {
+                organization(login: $org) {
+                  membersWithRole(first: 100, after: $cursor) {
                     pageInfo {
-                      hasNextPage
+                      hasNextPage,
                       endCursor
                     }
                     nodes {
-                      name
+                      login
                     }
                   }
                 }
-              }' > user_orgs.json
-          echo 'CONTRIBUTOR_IS_ORG_MEMBER='$(jq '.data.user.organizations | any(.nodes[].name; . == "$ORGANIZATION")' user_orgs.json) >> $GITHUB_ENV
-          
+              }' > org_members.json
+            echo 'CONTRIBUTOR_IS_ORG_MEMBER='$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json) >> $GITHUB_ENV
+    
       - name: Comment on external contribution PR
         if: ${{ env.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
         env:
