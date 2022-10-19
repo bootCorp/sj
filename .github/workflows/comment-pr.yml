@@ -37,7 +37,7 @@ jobs:
               }' > org_members.json
             echo 'CONTRIBUTOR_IS_ORG_MEMBER='$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json) >> $GITHUB_ENV
             echo "MEMBERS: $(jq '.data.organization.membersWithRole.nodes[].login' org_members.json)"
-            echo "IS MEMBER: $(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json)"
+            echo "IS MEMBER: $(jq '.data.organization.membersWithRole | any(.nodes[].login; . == $CONTRIBUTOR)' org_members.json)"
     
       - name: Comment on external contribution PR
         if: ${{ env.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
@@ -46,6 +46,7 @@ jobs:
           PR: ${{ github.event.pull_request.html_url }}
         run: |
           echo "aa $CONTRIBUTOR_IS_ORG_MEMBER"
+          echo "bb ${{ env.CONTRIBUTOR_IS_ORG_MEMBER }}"
           echo "Commenting new external PR: $PR"
           if [[ $DRY_RUN == "false" ]]; then
             gh pr edit $PR --add-label "external contribution :star:"
