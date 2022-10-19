@@ -43,6 +43,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
         run: |
+          echo "aa $CONTRIBUTOR_IS_ORG_MEMBER"
           echo "Commenting new external PR: $PR"
           if [[ $DRY_RUN == "false" ]]; then
             gh pr edit $PR --add-label "external contribution :star:"
