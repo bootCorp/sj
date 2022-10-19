@@ -32,7 +32,9 @@ jobs:
                   }
                 }
               }')"
+          echo "ORG MEMBERS $org_member"
           is_member="$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json)"
+          echot "IS MEMBER $is_member"
           echo "::set-output name=is_member::$is_member"
 
       - name: Comment on external contribution PR
