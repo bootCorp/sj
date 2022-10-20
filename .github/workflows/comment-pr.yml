@@ -8,7 +8,7 @@ on:
 
 env:
   ORGANIZATION: bootCorp
-  DRY_RUN: true
+  DRY_RUN: false
 
 jobs:
   comment-external-pr:
