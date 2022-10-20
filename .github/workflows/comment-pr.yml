@@ -20,22 +20,7 @@ jobs:
           GH_TOKEN: ${{ secrets.READ_ORG }} # org: read token
           CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
         run: |
-          is_org_member=$(gh api graphql \
-            --raw-field org="$ORGANIZATION" \
-            --raw-field query='
-              query($org: String!, $cursor: String) {
-                organization(login: $org) {
-                  membersWithRole(first: 100, after: $cursor) {
-                    pageInfo {
-                      hasNextPage,
-                      endCursor
-                    }
-                    nodes {
-                      login
-                    }
-                  }
-                }
-              }' --jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")')
+          is_org_member=true
           echo "::set-output name=contributor_is_org_member::${{ toJSON($is_org_member) }}"
   
       - run: echo ${{ steps.get_members.outputs.contributor_is_org_member }}
