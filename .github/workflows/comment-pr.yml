@@ -36,6 +36,7 @@ jobs:
                   }
                 }
               }' > org_members.json
+          echo "CONTRIBUTOR: $CONTRIBUTOR"
           echo "CONTRIBUTOR_IS_ORG_MEMBER=$(jq --arg contributor $CONTRIBUTOR '.data.organization.membersWithRole | any(.nodes[].login; . == $contributor)' org_members.json)" >> $GITHUB_OUTPUT
 
       - run: echo ${{ steps.get_members.outputs.CONTRIBUTOR_IS_ORG_MEMBER }}
