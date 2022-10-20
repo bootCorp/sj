@@ -2,7 +2,7 @@ name: External contribution guidelines
 
 on:
   pull_request_target:
-    types: 
+    types:
       - opened
       - reopened
 
@@ -17,14 +17,14 @@ jobs:
       - name: Get organization members
         id: get_members
         env:
-          GH_TOKEN: ${{ secrets.READ_ORG }} # org: read token
+          GH_TOKEN: ${{ secrets.READ_ORG }}
           CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
         run: |
           gh api graphql \
-            --raw-field org="$ORGANIZATION" \
+            --raw-field organization="$ORGANIZATION" \
             --raw-field query='
-              query($org: String!, $cursor: String) {
-                organization(login: $org) {
+              query($organization: String!, $cursor: String) {
+                organization(login: $organization) {
                   membersWithRole(first: 100, after: $cursor) {
                     pageInfo {
                       hasNextPage,
@@ -36,10 +36,12 @@ jobs:
                   }
                 }
               }' > org_members.json
-          echo "CONTRIBUTOR: $CONTRIBUTOR"
-          echo "CONTRIBUTOR_IS_ORG_MEMBER=$(jq --arg contributor $CONTRIBUTOR '.data.organization.membersWithRole | any(.nodes[].login; . == $contributor)' org_members.json)" >> $GITHUB_OUTPUT
-
-      - run: echo ${{ steps.get_members.outputs.CONTRIBUTOR_IS_ORG_MEMBER }}
+          echo "CONTRIBUTOR_IS_ORG_MEMBER=$(
+            jq \
+              --arg contributor $CONTRIBUTOR \
+              '.data.organization.membersWithRole | any(.nodes[].login; . == $contributor)' \
+              org_members.json
+          )" >> $GITHUB_OUTPUT
 
       - name: Comment on external contribution PR
         if: ${{ steps.get_members.outputs.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
@@ -47,10 +49,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
         run: |
-          echo "Commenting new external PR: $PR"
+          echo "Commenting in a newly submitted or reopened external PR: $PR"
           if [[ $DRY_RUN == 'false' ]]; then
-            gh pr edit $PR --add-label "external contribution :star:"
-            gh pr comment $PR --body "Hi, thank you for your contribution. A Solidity team member will shortly look at it.
-            Please, make sure you have read and followed our [contributing guidelines](https://docs.soliditylang.org/en/latest/contributing.html) and also our [review checklist](https://github.com/ethereum/solidity/blob/develop/ReviewChecklist.md) so the process of accepting your contribution can be speedup.
-            If you have any questions, you can reach out to the core team using the [solidity-dev Matrix channel](https://matrix.to/#/#ethereum_solidity-dev:gitter.im)"
+            gh pr edit "$PR" --add-label "external contribution :star:"
+            comment_body=(
+              "Hi, thank you for your contribution. A Solidity team member will shortly look at it."
+              "\n\n"
+              "Please, make sure you have read and followed our "
+              "[contributing guidelines](https://docs.soliditylang.org/en/latest/contributing.html) "
+              "and also our [review checklist](https://github.com/ethereum/solidity/blob/develop/ReviewChecklist.md) "
+              "so the process of accepting your contribution can be speedup."
+              "\n\n"
+              "If you have any questions, you can reach out to the core team using the "
+              "[solidity-dev Matrix channel](https://matrix.to/#/#ethereum_solidity-dev:gitter.im)"
+            )
+            gh pr comment $PR --body "$(IFS='' ; echo -e "${comment_body[*]}")"
           fi
