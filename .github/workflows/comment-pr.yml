@@ -36,7 +36,7 @@ jobs:
                   }
                 }
               }' --jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")')
-            echo "::set-output name=contributor_is_org_member::${{ toJSON($is_org_member) }}"
+          echo "::set-output name=contributor_is_org_member::${{ toJSON($is_org_member) }}"
   
       - run: echo ${{ steps.get_members.outputs.contributor_is_org_member }}
 
