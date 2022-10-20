@@ -20,15 +20,28 @@ jobs:
           GH_TOKEN: ${{ secrets.READ_ORG }} # org: read token
           CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
         run: |
-          is_org_member=true
-          echo "::set-output name=contributor_is_org_member::${{ toJSON($is_org_member) }}"
-  
+          is_org_member="$(gh api graphql \
+            --raw-field org="$ORGANIZATION" \
+            --raw-field query='
+              query($org: String!, $cursor: String) {
+                organization(login: $org) {
+                  membersWithRole(first: 100, after: $cursor) {
+                    pageInfo {
+                      hasNextPage,
+                      endCursor
+                    }
+                    nodes {
+                      login
+                    }
+                  }
+                }
+              }' --jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")')"
+          echo "::set-output name=contributor_is_org_member::$is_org_member"
+
       - run: echo ${{ steps.get_members.outputs.contributor_is_org_member }}
 
-      - run: echo ${{ fromJSON(steps.get_members.outputs.contributor_is_org_member) }}
-
       - name: Comment on external contribution PR
-        if: fromJSON(steps.get_members.outputs.contributor_is_org_member) 
+        if: ${{ steps.get_members.outputs.contributor_is_org_member == 'false' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -36,5 +49,7 @@ jobs:
           echo "Commenting new external PR: $PR"
           if [[ $DRY_RUN == "false" ]]; then
             gh pr edit $PR --add-label "external contribution :star:"
-            gh pr comment $PR --body "Hi, thank you for your contribution."
+            gh pr comment $PR --body "Hi, thank you for your contribution. A Solidity team member will shortly look at it.
+            Please, make sure you have read and followed our [contributing guidelines](https://docs.soliditylang.org/en/latest/contributing.html) and also our [review checklist](https://github.com/ethereum/solidity/blob/develop/ReviewChecklist.md) so the process of accepting your contribution can be speedup.
+            If you have any questions, you can reach out to the core team using the [solidity-dev Matrix channel](https://matrix.to/#/#ethereum_solidity-dev:gitter.im)"
           fi
