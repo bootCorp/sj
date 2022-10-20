@@ -53,15 +53,15 @@ jobs:
           if [[ $DRY_RUN == 'false' ]]; then
             gh pr edit "$PR" --add-label "external contribution :star:"
             comment_body=(
-              "Hi, thank you for your contribution. A Solidity team member will shortly look at it."
+              "Thank you for your contribution to the Solidity compiler! A team member will shortly look at it."
               "\n\n"
               "Please, make sure you have read and followed our "
               "[contributing guidelines](https://docs.soliditylang.org/en/latest/contributing.html) "
               "and also our [review checklist](https://github.com/ethereum/solidity/blob/develop/ReviewChecklist.md) "
-              "so the process of accepting your contribution can be speedup."
+              "to make the process of reviewing and accepting your contribution smooth."
               "\n\n"
-              "If you have any questions, you can reach out to the core team using the "
-              "[solidity-dev Matrix channel](https://matrix.to/#/#ethereum_solidity-dev:gitter.im)"
+              "If you have any questions or need help, feel free to post them in the PR or talk to us directly on the "
+              "[#solidity-dev](https://matrix.to/#/#ethereum_solidity-dev:gitter.im) channel on Matrix."
             )
             gh pr comment $PR --body "$(IFS='' ; echo -e "${comment_body[*]}")"
           fi
