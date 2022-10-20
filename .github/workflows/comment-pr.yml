@@ -20,7 +20,7 @@ jobs:
           GH_TOKEN: ${{ secrets.READ_ORG }} # org: read token
           CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
         run: |
-          is_org_member="$(gh api graphql \
+          gh api graphql \
             --raw-field org="$ORGANIZATION" \
             --raw-field query='
               query($org: String!, $cursor: String) {
@@ -35,13 +35,13 @@ jobs:
                     }
                   }
                 }
-              }' --jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")')"
-          echo "::set-output name=contributor_is_org_member::$is_org_member"
+              }' > org_members.json
+          echo "CONTRIBUTOR_IS_ORG_MEMBER=$(jq --arg contributor $CONTRIBUTOR '.data.organization.membersWithRole | any(.nodes[].login; . == "$contributor")' org_members.json)" >> $GITHUB_OUTPUT
 
-      - run: echo ${{ steps.get_members.outputs.contributor_is_org_member }}
+      - run: echo ${{ steps.get_members.outputs.CONTRIBUTOR_IS_ORG_MEMBER }}
 
       - name: Comment on external contribution PR
-        if: ${{ steps.get_members.outputs.contributor_is_org_member == 'false' }}
+        if: ${{ steps.get_members.outputs.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
