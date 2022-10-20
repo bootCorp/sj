@@ -1,0 +1,42 @@
+name: Check whether a contributor is member of the organization using GraphQL API
+inputs:
+  token:
+    description: 'The GITHUB_TOKEN secret with read org permission'
+    required: true
+  organization:
+    description: 'The organization name'
+    required: true
+  contributor:
+    description: 'The contributor's github handle'
+    required: true
+outputs:
+  CONTRIBUTOR_IS_ORG_MEMBER:
+    description: "Whether the contributor is a member of the organization"
+    value: ${{ steps.get_members.outputs.CONTRIBUTOR_IS_ORG_MEMBER }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get organization members
+      id: get_members
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        gh api graphql \
+          --raw-field org="${{ inputs.organization }}" \
+          --raw-field query='
+            query($org: String!, $cursor: String) {
+              organization(login: $org) {
+                membersWithRole(first: 100, after: $cursor) {
+                  pageInfo {
+                    hasNextPage,
+                    endCursor
+                  }
+                  nodes {
+                    login
+                  }
+                }
+              }
+            }' > org_members.json
+        echo "CONTRIBUTOR_IS_ORG_MEMBER=$(jq --arg contributor ${{ inputs.contributor }} '.data.organization.membersWithRole | any(.nodes[].login; . == $contributor)' org_members.json)" >> $GITHUB_OUTPUT

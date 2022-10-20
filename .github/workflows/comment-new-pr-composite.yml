@@ -8,41 +8,22 @@ on:
 
 env:
   ORGANIZATION: bootCorp
-  DRY_RUN: true
+  DRY_RUN: false
 
 jobs:
   comment-external-pr:
     runs-on: ubuntu-latest
     steps:
-      - name: Get organization members
-        id: get_members
-        env:
-          GH_TOKEN: ${{ secrets.READ_ORG }} # org: read token
-          CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
-        run: |
-          gh api graphql \
-            --raw-field org="$ORGANIZATION" \
-            --raw-field query='
-              query($org: String!, $cursor: String) {
-                organization(login: $org) {
-                  membersWithRole(first: 100, after: $cursor) {
-                    pageInfo {
-                      hasNextPage,
-                      endCursor
-                    }
-                    nodes {
-                      login
-                    }
-                  }
-                }
-              }' > org_members.json
-          echo "CONTRIBUTOR: $CONTRIBUTOR"
-          echo "CONTRIBUTOR_IS_ORG_MEMBER=$(jq --arg contributor $CONTRIBUTOR '.data.organization.membersWithRole | any(.nodes[].login; . == $contributor)' org_members.json)" >> $GITHUB_OUTPUT
-
-      - run: echo ${{ steps.get_members.outputs.CONTRIBUTOR_IS_ORG_MEMBER }}
+      - name: Check whether contributor is a member of the organization
+        id: is_org_member
+        uses: ./.github/actions/is-org-member
+        with:
+          token: ${{ secrets.READ_ORG }}
+          organization: ${{ env.ORGANIZATION }}
+          contributor: ${{ github.event.pull_request.user.login }}
 
       - name: Comment on external contribution PR
-        if: ${{ steps.get_members.outputs.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
+        if: ${{ steps.is_org_member.outputs.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
