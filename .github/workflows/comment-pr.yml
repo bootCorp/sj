@@ -15,11 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get organization members
+        id: get_members
         env:
-          GH_TOKEN: ${{ secrets.READ_ORG }}
+          GH_TOKEN: ${{ secrets.READ_ORG }} # org: read token
           CONTRIBUTOR: ${{ github.event.pull_request.user.login }}
         run: |
-           gh api graphql \
+          is_org_member="$(gh api graphql \
             --raw-field org="$ORGANIZATION" \
             --raw-field query='
               query($org: String!, $cursor: String) {
@@ -34,21 +35,17 @@ jobs:
                     }
                   }
                 }
-              }' > org_members.json
-            echo "CONTRIBUTOR_IS_ORG_MEMBER='$(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json)'" >> $GITHUB_ENV
+              }' --jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")')"
+            echo "::set-output name=contributor_is_org_member::${{ toJSON($is_org_member) }}"
 
-            echo "CONTRIBUTOR: $CONTRIBUTOR"
-            echo "MEMBERS: $(jq '.data.organization.membersWithRole.nodes[].login' org_members.json)"
-            echo "IS MEMBER: $(jq '.data.organization.membersWithRole | any(.nodes[].login; . == "$CONTRIBUTOR")' org_members.json)"
-    
+      - run: echo ${{ steps.get_members.outputs.contributor_is_org_member }}
+
       - name: Comment on external contribution PR
-        if: ${{ env.CONTRIBUTOR_IS_ORG_MEMBER == 'false' }}
+        if: fromJSON(steps.get_members.outputs.contributor_is_org_member) 
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
         run: |
-          echo "aa $CONTRIBUTOR_IS_ORG_MEMBER"
-          echo "bb ${{ env.CONTRIBUTOR_IS_ORG_MEMBER }}"
           echo "Commenting new external PR: $PR"
           if [[ $DRY_RUN == "false" ]]; then
             gh pr edit $PR --add-label "external contribution :star:"
