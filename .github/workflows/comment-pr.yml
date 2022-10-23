@@ -1,4 +1,4 @@
-name: External contribution guidelines
+name: External contributor greeter
 
 on:
   pull_request_target:
@@ -53,14 +53,13 @@ jobs:
           if [[ $DRY_RUN == 'false' ]]; then
             gh pr edit "$PR" --add-label "external contribution :star:"
             comment_body=(
-              "Thank you for your contribution to the Solidity compiler! A team member will shortly look at it."
+              "Thank you for your contribution to the Solidity compiler! A team member will follow up shortly."
               "\n\n"
-              "Please, make sure you have read and followed our "
-              "[contributing guidelines](https://docs.soliditylang.org/en/latest/contributing.html) "
-              "and also our [review checklist](https://github.com/ethereum/solidity/blob/develop/ReviewChecklist.md) "
-              "to make the process of reviewing and accepting your contribution smooth."
+              "If you haven't read our [contributing guidelines](https://docs.soliditylang.org/en/latest/contributing.html) and our "
+              "[review checklist](https://github.com/ethereum/solidity/blob/develop/ReviewChecklist.md) before, "
+              "please do it now, this makes the reviewing process and accepting your contribution smoother."
               "\n\n"
-              "If you have any questions or need help, feel free to post them in the PR or talk to us directly on the "
+              "If you have any questions or need our help, feel free to post them in the PR or talk to us directly on the "
               "[#solidity-dev](https://matrix.to/#/#ethereum_solidity-dev:gitter.im) channel on Matrix."
             )
             gh pr comment $PR --body "$(IFS='' ; echo -e "${comment_body[*]}")"
